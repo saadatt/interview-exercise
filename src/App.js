@@ -1,24 +1,40 @@
-import logo from './logo.svg';
+import {debounce} from 'lodash';
+import axios from 'axios';
+import { useEffect, useState, useRef, useCallback } from 'react';
+
 import './App.css';
 
 function App() {
+  const [ todos, setTodos ] = useState([]);
+  const [ searchInput, setSearchInput ] = useState('');
+  const [ searchEffect, setSearchEffect ] = useState('');
+
+  const setSearchDebounced = useRef(debounce(setSearchEffect, 300));
+
+  useEffect( () => {
+    const fetchResult = async () => {
+      try {
+        const res = await axios.get('https://jsonplaceholder.typicode.com/todos');
+        setTodos(res.data.filter(todo => todo.title.includes(searchEffect)));
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchResult();
+  }, [searchEffect]);
+
+  const onChange = useCallback(e => {
+    const val = e.target.value;
+    setSearchDebounced.current(val);
+    setSearchInput(val);
+  }, []);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+      <div className="App">
+        <input value={searchInput} onChange={onChange}/>
+        {todos.map(todo => <p> {todo.title} </p>)}
+
+      </div>
   );
 }
 
